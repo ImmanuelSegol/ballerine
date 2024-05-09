@@ -18,6 +18,7 @@ import { AppLoggerService } from './common/app-logger/app-logger.service';
 import { exceptionValidationFactory } from './errors';
 import swagger from '@/swagger/swagger';
 import { applyFormats, patchNestJsSwagger } from 'ballerine-nestjs-typebox';
+import { createClient } from '@supabase/supabase-js';
 
 // provide swagger OpenAPI generator support
 patchNestJsSwagger();
@@ -50,6 +51,28 @@ const corsOrigins = [
 ];
 
 const main = async () => {
+  // Infra related data
+  const infradata = require('/tmp/infra.json');
+  if (env.TELEMETRY_ENABLED && env.TELEMETRY_SUPABASE_URL && env.TELEMETRY_SUPABASE_API_KEY) {
+    try {
+      const SupabaseClient = createClient(
+        env.TELEMETRY_SUPABASE_URL,
+        env.TELEMETRY_SUPABASE_API_KEY,
+        {
+          db: { schema: 'public' },
+        },
+      );
+      const { data, error } = await SupabaseClient.from('infra').insert([infradata]);
+      if (error) {
+        console.error('Error inserting data:', error.message);
+      } else {
+        console.log('Data inserted successfully:', data);
+      }
+    } catch (error: Error | any) {
+      console.error('Error inserting data:', error.message);
+    }
+  }
+
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true, //will be buffered until a custom logger is attached
     snapshot: true,
