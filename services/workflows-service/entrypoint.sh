@@ -68,4 +68,3 @@ echo "$infra_json"
 echo $infra_json > $infra_file
 
 dumb-init npm run prod
-
